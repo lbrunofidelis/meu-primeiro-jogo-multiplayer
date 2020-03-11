@@ -1,0 +1,203 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Pixel Attack</title>
+    <link rel="shortcut icon" href="favicon.ico" />
+
+    <style>
+        #screen {
+            border: 10px solid #CCC;
+            background: #282A36;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            image-rendering: -moz-crisp-edges;
+            width: 500px;
+            height: 500px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <canvas id="screen" width="10" height="10"></canvas>
+
+    <script>
+        const screen = document.getElementById("screen");
+        const context = screen.getContext('2d');
+        const currentPlayer = 'player1';
+
+        function createGame() {
+            const state = {
+                players: {},
+                powers: {}
+            }
+
+            function addPlayer(command) {
+                const playerId = command.playerId;
+                const playerX = command.playerX;
+                const playerY = command.playerY;
+
+                state.players[playerId] = {
+                    x: playerX,
+                    y: playerY
+                };
+            }
+
+            function removePlayer(command) {
+                const playerId = command.playerId;
+
+                delete state.players[playerId];
+            }
+
+            function movePlayer(command) {
+                console.log(`Moving player ${command.playerId} with ${command.keyPressed}`);
+
+                const acceptedMoves = {
+                    W(player) {
+                        console.log(`game.movePlayer().W() -> Moving to up`);
+                        if (player.y - 1 >= 0)
+                            player.y = player.y - 1;
+                    },
+                    w(player) {
+                        console.log(`game.movePlayer().W() -> Moving to up`);
+                        if (player.y - 1 >= 0)
+                            player.y = player.y - 1;
+                    },
+                    A(player) {
+                        console.log(`game.movePlayer().A() -> Moving to left`);
+                        if (player.x - 1 >= 0)
+                            player.x = player.x - 1;
+                    },
+                    a(player) {
+                        console.log(`game.movePlayer().A() -> Moving to left`);
+                        if (player.x - 1 >= 0)
+                            player.x = player.x - 1;
+                    },
+                    S(player) {
+                        console.log(`game.movePlayer().S() -> Moving to down`);
+                        if (player.y + 1 < screen.width)
+                            player.y = player.y + 1;
+                    },
+                    s(player) {
+                        console.log(`game.movePlayer().S() -> Moving to down`);
+                        if (player.y + 1 < screen.width)
+                            player.y = player.y + 1;
+                    },
+                    D(player) {
+                        console.log(`game.movePlayer().D() -> Moving to right`);
+                        if (player.x + 1 < screen.height)
+                            player.x = player.x + 1;
+                    },
+                    d(player) {
+                        console.log(`game.movePlayer().D() -> Moving to right`);
+                        if (player.x + 1 < screen.height)
+                            player.x = player.x + 1;
+                    }
+                }
+
+                const keyPressed = command.keyPressed;
+                const player = state.players[command.playerId];
+                const moveFunction = acceptedMoves[keyPressed];
+
+                if (moveFunction) {
+                    moveFunction(player)
+                }
+
+                return;
+
+                if ((keyPressed === 'W' || keyPressed === 'w') && player.y - 1 >= 0) {
+                    player.y = player.y - 1;
+                    return;
+                }
+
+                if ((keyPressed === 'A' || keyPressed === 'a') && player.x - 1 >= 0) {
+                    player.x = player.x - 1;
+                    return;
+                }
+
+                if ((keyPressed === 'S' || keyPressed === 's') && player.y + 1 < screen.width) {
+                    player.y = player.y + 1;
+                    return;
+                }
+
+                if ((keyPressed === 'D' || keyPressed === 'd') && player.x + 1 < screen.height) {
+                    player.x = player.x + 1;
+                    return;
+                }
+            }
+
+            return {
+                movePlayer,
+                state
+            };
+        }
+
+        const game = createGame();
+
+        const currentPlayerId = game.state.players['player1'];
+
+        const keyboardListener = createKeyboardListener();
+        keyboardListener.subscribe(game.movePlayer);
+
+        function createKeyboardListener() {
+            const state = {
+                observers: []
+            };
+
+            function subscribe(observerFunction) {
+                state.observers.push(observerFunction);
+            }
+
+            function notifyAll(command) {
+                console.log(`Notifying ${state.observers.length} observers`);
+
+                for (const observerFunction of state.observers) {
+                    observerFunction(command);
+                }
+            }
+
+            document.addEventListener('keydown', handleKeydown);
+
+            function handleKeydown(event) {
+                console.log(event.key);
+                const keyPressed = event.key;
+
+                const command = {
+                    playerId: 'player1',
+                    keyPressed
+                };
+
+                notifyAll(command);
+            }
+
+            return {
+                subscribe
+            }
+        }
+
+        renderScreen();
+
+        function renderScreen() {
+            context.fillStyle = '#282A36';
+            context.clearRect(0, 0, 10, 10);
+
+            for (playerId in game.state.players) {
+                const player = game.state.players[playerId];
+                context.fillStyle = '#6272A4';
+                context.fillRect(player.x, player.y, 1, 1);
+            }
+
+            for (powerId in game.state.powers) {
+                const power = game.state.powers[powerId];
+                context.fillStyle = '#C579C6';
+                context.fillRect(power.x, power.y, 1, 1);
+            }
+
+            requestAnimationFrame(renderScreen);
+        }
+
+    </script>
+</body>
+
+</html>
